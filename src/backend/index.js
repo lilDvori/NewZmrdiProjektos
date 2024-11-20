@@ -24,24 +24,34 @@ app.use(express.static(path.join(__dirname, '../frontend/public')));
 app.use('/admin', express.static(path.join(__dirname, '../frontend/admin')));
 app.use('/worker', express.static(path.join(__dirname, '../frontend/worker')));
 
-// Middleware pro kontrolu přihlášení
-const checkAuth = (req, res, next) => {
-    if (req.session && req.session.user) {
-        return next();
-    }
-    res.status(401).send('Unauthorized');
+// Middleware pro odstranění .html z URL
+app.get('/admin/:page', (req, res) => {
+    res.sendFile(path.join(__dirname, `../frontend/admin/${req.params.page}.html`));
+});
+app.get('/worker/:page', (req, res) => {
+    res.sendFile(path.join(__dirname, `../frontend/worker/${req.params.page}.html`));
+});
+
+// Middleware pro kontrolu přihlášení a role
+const checkAuth = (role) => {
+    return (req, res, next) => {
+        if (req.session && req.session.user && req.session.user.role === role) {
+            return next();
+        }
+        res.status(403).send('Přístup zakázán'); // Zakázání přístupu pro neautorizované role
+    };
 };
+
+// Chráněné cesty
+app.use('/admin', checkAuth('admin'));
+app.use('/worker', checkAuth('worker'));
 
 // Připojení rout pro autentizaci
 app.use('/auth', authRoutes);
 
-// Chráněné cesty
-app.use('/admin', checkAuth, express.static(path.join(__dirname, '../frontend/admin')));
-app.use('/worker', checkAuth, express.static(path.join(__dirname, '../frontend/worker')));
-
 // Přesměrování na login při otevření hlavní stránky
 app.get('/', (req, res) => {
-    res.redirect('/login.html');
+    res.redirect('/login');
 });
 
 // Spuštění serveru
