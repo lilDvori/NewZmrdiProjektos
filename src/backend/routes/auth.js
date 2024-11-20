@@ -1,12 +1,3 @@
-const express = require("express");
-const router = express.Router();
-
-const users = [
-    { username: "admin", password: "admin123", role: "admin" },
-    { username: "worker", password: "worker123", role: "worker" },
-];
-
-// Endpoint pro přihlášení
 router.post('/api/login', (req, res) => {
     const { username, password } = req.body;
 
@@ -27,10 +18,11 @@ router.post('/api/login', (req, res) => {
             role: user.role,
         };
 
+        const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/worker/dashboard';
+
         return res.json({
             success: true,
-            username: user.username,
-            role: user.role,
+            redirect: redirectPath, // Přesměrování podle role
         });
     }
 
@@ -39,5 +31,3 @@ router.post('/api/login', (req, res) => {
         message: "Neplatné uživatelské jméno nebo heslo.",
     });
 });
-
-module.exports = router;
